@@ -1,8 +1,3 @@
-# Clone Youtube Music
-Implementação do clone do Youtube Music com Java
-
----
-
 # 🎵 YouTube Music Clone
 
 > Sistema de streaming musical desenvolvido em Java — Projeto de POO 2026
