@@ -1,0 +1,85 @@
+classDiagram
+  direction TB
+
+  class Usuario {
+    -Long id
+    -String nome
+    -String email
+    -String senha
+    -Boolean isAdmin
+    -LocalDateTime criadoEm
+    +autenticar(senha: String) Boolean
+    +criarPlaylist(nome: String) Playlist
+  }
+
+  class Artista {
+    -Long id
+    -String nome
+    -String biografia
+    -String fotoUrl
+    +obterDiscografia() List~Album~
+  }
+
+  class Album {
+    -Long id
+    -String titulo
+    -String capaUrl
+    -Integer anoLancamento
+    +obterFaixas() List~Musica~
+  }
+
+  class Genero {
+    -Long id
+    -String nome
+  }
+
+  class Musica {
+    -Long id
+    -String titulo
+    -String urlYoutube
+    -Integer duracaoSegundos
+    -LocalDateTime criadoEm
+    +reproduzir() void
+  }
+
+  class Playlist {
+    -Long id
+    -String nome
+    -String descricao
+    -LocalDateTime criadoEm
+    +adicionarMusica(musica: Musica) void
+    +removerMusica(musica: Musica) void
+    +renomear(novoNome: String) void
+  }
+
+  class HistoricoReproducao {
+    -Long id
+    -LocalDateTime reproduzidoEm
+    +registrar(usuario: Usuario, musica: Musica) void
+  }
+
+  class FilaReproducao {
+    -Long id
+    -LocalDateTime atualizadaEm
+    +adicionarAFila(musica: Musica) void
+    +proximaMusica() Musica
+    +musicaAnterior() Musica
+    +gerarFilaAutomatica(historico: List~HistoricoReproducao~) void
+    +limparFila() void
+  }
+
+  %% Relacionamentos e Multiplicidades
+  Usuario "1" --> "*" Playlist : gerencia (UC05)
+  Usuario "1" --> "1" FilaReproducao : mantem ativa
+  Usuario "1" --> "*" HistoricoReproducao : gera
+
+  Musica "*" --> "1" Album : pertence a
+  Musica "*" --> "1" Artista : interpretada por
+  Musica "*" --> "1" Genero : classificada como
+  Album "*" --> "1" Artista : produzido por
+
+  %% Agregações (Representando as listas de músicas dentro das estruturas)
+  Playlist "*" o-- "*" Musica : contem (RF07/RF08)
+  FilaReproducao "1" o-- "*" Musica : organiza a ordem (RF10)
+  
+  HistoricoReproducao "*" --> "1" Musica : refere-se a (RF13)
