@@ -5,7 +5,7 @@ Implementação do clone do Youtube Music com Java
 
 # 🎵 YouTube Music Clone
 
-> Sistema de streaming musical desenvolvido em Java — Projeto de Engenharia de Software 2026
+> Sistema de streaming musical desenvolvido em Java — Projeto de POO 2026
 
 ---
 
@@ -457,4 +457,4 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ---
 
-> Projeto acadêmico — Engenharia de Software 2026
+> Projeto acadêmico — Sistemas de Informação 2026
