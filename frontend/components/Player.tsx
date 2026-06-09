@@ -1,6 +1,23 @@
-import { Play, SkipBack, SkipForward } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Play,
+  SkipBack,
+  SkipForward,
+  Maximize2,
+  Minimize2,
+  Volume2,
+} from "lucide-react";
 
 export default function Player() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Verifica se o usuário já está na tela cheia
+  const isNowPlaying = pathname === "/now-playing";
+
   return (
     <footer className="h-24 bg-zinc-900 border-t border-zinc-800 flex items-center justify-between px-6 z-10">
       {/* Informações da Música */}
@@ -28,7 +45,7 @@ export default function Player() {
             className="text-zinc-200 cursor-pointer hover:text-white"
           />
           <button className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform">
-            <Play className="fill-black" size={20} />
+            <Play className="fill-black ml-1" size={20} />
           </button>
           <SkipForward
             size={24}
@@ -37,19 +54,42 @@ export default function Player() {
         </div>
 
         <div className="flex items-center gap-2 w-full max-w-md">
-          <span className="text-xs text-zinc-400">0:00</span>
+          <span className="text-xs text-zinc-400">1:23</span>
           <div className="h-1 rounded-full w-full bg-zinc-600 cursor-pointer relative group">
-            <div className="bg-red-500 w-1/4 h-full rounded-full absolute top-0 left-0"></div>
+            <div className="bg-red-500 w-1/3 h-full rounded-full absolute top-0 left-0"></div>
           </div>
-          <span className="text-xs text-zinc-400">3:30</span>
+          <span className="text-xs text-zinc-400">3:45</span>
         </div>
       </div>
 
       {/* Volume / Extras */}
-      <div className="w-1/3 flex justify-end">
-        <div className="w-24 h-1 bg-zinc-600 rounded-full cursor-pointer">
+      <div className="w-1/3 flex justify-end items-center gap-4">
+        <Volume2
+          size={20}
+          className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
+        />
+        <div className="w-24 h-1 bg-zinc-600 rounded-full cursor-pointer hidden md:block">
           <div className="bg-zinc-400 w-2/3 h-full rounded-full"></div>
         </div>
+
+        {/* Controle Inteligente: Maximizar ou Minimizar */}
+        {isNowPlaying ? (
+          <button
+            onClick={() => router.back()}
+            className="ml-4 text-zinc-400 hover:text-white transition-colors"
+            title="Minimizar"
+          >
+            <Minimize2 size={20} />
+          </button>
+        ) : (
+          <Link
+            href="/now-playing"
+            className="ml-4 text-zinc-400 hover:text-white transition-colors"
+            title="Tela Cheia"
+          >
+            <Maximize2 size={20} />
+          </Link>
+        )}
       </div>
     </footer>
   );
