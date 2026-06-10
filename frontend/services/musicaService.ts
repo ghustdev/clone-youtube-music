@@ -17,12 +17,15 @@ export const musicaService = {
     return response.data;
   },
 
-  criar: async (musica: Omit<Musica, "id">): Promise<Musica> => {
-    const response = await api.post("/api/musicas", musica);
+  search: async (musica: string): Promise<Musica[]> => {
+    const response = await api.get("/api/musics/search", {
+      params: { q: musica },
+    });
     return response.data;
   },
 
-  deletar: async (id: number): Promise<void> => {
-    await api.delete(`/api/musicas/${id}`);
+  findById: async (id: number): Promise<Musica> => {
+    const response = await api.get(`/api/musicas/${id}`);
+    return response.data;
   },
 };

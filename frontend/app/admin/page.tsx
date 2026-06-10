@@ -42,7 +42,7 @@ export default function Admin() {
 
     if (confirm("Tem certeza que deseja excluir esta música?")) {
       try {
-        await musicaService.deletar(id);
+        await musicaService.findById(id);
         // Atualiza a lista na tela removendo a música deletada
         setMusicas(musicas.filter((m) => m.id !== id));
       } catch (error) {

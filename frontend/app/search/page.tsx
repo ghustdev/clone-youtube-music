@@ -1,13 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search as SearchIcon, Play } from "lucide-react";
+import { musicaService, Musica } from "@/services/musicaService";
 
 export default function Search() {
   const [query, setQuery] = useState("");
 
-  // Mock de resultados (substitua pelo retorno do Java depois)
-  const mockResults = [1, 2, 3, 4];
+  const [musicas, setMusicas] = useState<Musica[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  // Atualiza os resultados sempre que o termo de busca mudar
+  useEffect(() => {
+    if (!query.trim()) {
+      setMusicas([]);
+      setErro(null);
+      setLoading(false);
+      return;
+    }
+
+    carregarMusicas();
+  }, [query]);
+
+  const carregarMusicas = async () => {
+    try {
+      setLoading(true);
+      const dados = await musicaService.search(query);
+      console.log(dados);
+      setMusicas(dados);
+      setErro(null);
+    } catch (error) {
+      console.error("Erro ao buscar do Java:", error);
+      setErro(
+        "Não foi possível conectar ao servidor. Verifique se o Spring Boot está rodando.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,9 +64,9 @@ export default function Search() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {mockResults.map((item) => (
+            {musicas.map((item) => (
               <div
-                key={item}
+                key={item.id}
                 className="flex flex-col gap-2 group cursor-pointer bg-zinc-900/50 p-4 rounded-lg hover:bg-zinc-800 transition-colors"
               >
                 <div className="w-full aspect-square bg-zinc-800 rounded-md overflow-hidden relative mb-2">
@@ -49,7 +80,7 @@ export default function Search() {
                   </button>
                 </div>
                 <strong className="text-sm font-medium">
-                  Resultado Encontrado {item}
+                  Resultado Encontrado {item.title}
                 </strong>
                 <span className="text-xs text-zinc-400">Música • Artista</span>
               </div>
