@@ -1,34 +1,65 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Compass,
   Library,
   Play,
   Search,
-  History,
   Settings,
   LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
+import { authService } from "@/services/authService";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [isLogado, setIsLogado] = useState(false);
+  const [nomeUsuario, setNomeUsuario] = useState("Usuário Logado");
+
+  useEffect(() => {
+    // Função que checa o armazenamento
+    const checkAuth = () => {
+      const token = localStorage.getItem("@YTMusic:token");
+      const nome = localStorage.getItem("@YTMusic:nome");
+
+      if (token) {
+        setIsLogado(true);
+        if (nome) setNomeUsuario(nome);
+      } else {
+        setIsLogado(false);
+      }
+    };
+
+    // Roda a checagem na primeira vez que a tela abre
+    checkAuth();
+
+    // Fica de plantão aguardando o evento 'auth-change' do authService
+    window.addEventListener("auth-change", checkAuth);
+
+    // Limpa o plantão se o componente for destruído (boa prática do React)
+    return () => {
+      window.removeEventListener("auth-change", checkAuth);
+    };
+  }, []); // Removemos o pathname daqui, agora dependemos só do evento
+
+  const handleLogout = () => {
+    authService.logout();
+    router.push("/auth");
+  };
 
   const menuItems = [
     { href: "/", label: "Início", icon: Home },
     { href: "/explore", label: "Explorar", icon: Compass },
     { href: "/search", label: "Buscar", icon: Search },
     { href: "/library", label: "Biblioteca", icon: Library },
-    { href: "/history", label: "Histórico", icon: History },
   ];
-
-  const adminItems = [
-    { href: "/admin", label: "Painel Admin", icon: Settings },
-    { href: "/auth", label: "Login / Sair", icon: LogIn },
-  ];
-
   return (
     <aside className="w-64 bg-black p-6 flex flex-col gap-6 hidden md:flex border-r border-zinc-900 justify-between">
       <div>
@@ -58,25 +89,54 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <nav className="flex flex-col gap-4 border-t border-zinc-900 pt-4">
-        {adminItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 text-sm font-medium transition-colors ${isActive ? "text-white font-semibold" : "text-zinc-400 hover:text-white"}`}
+      <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4">
+        {/* Painel Admin só precisa aparecer como uma opção extra */}
+        <Link
+          href="/admin"
+          className={`flex items-center gap-4 text-sm font-medium transition-colors ${pathname === "/admin" ? "text-white font-semibold" : "text-zinc-400 hover:text-white"}`}
+        >
+          <Settings
+            size={20}
+            className={pathname === "/admin" ? "text-white" : "text-zinc-400"}
+          />
+          Painel Admin
+        </Link>
+
+        {/* Caixinha Dinâmica de Perfil / Login */}
+        {isLogado ? (
+          <div className="flex items-center justify-between bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 mt-2">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center flex-shrink-0">
+                <User size={16} className="text-zinc-400" />
+              </div>
+              <span
+                className="text-sm font-medium text-white truncate w-24"
+                title={nomeUsuario}
+              >
+                {nomeUsuario}
+              </span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-zinc-400 hover:text-red-500 transition-colors p-1"
+              title="Sair da conta"
             >
-              <Icon
-                size={20}
-                className={isActive ? "text-white" : "text-zinc-400"}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+              <LogOut size={18} />
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/auth"
+            className={`flex items-center gap-4 text-sm font-medium transition-colors mt-2 ${pathname === "/auth" ? "text-white font-semibold" : "text-zinc-400 hover:text-white"}`}
+          >
+            <LogIn
+              size={20}
+              className={pathname === "/auth" ? "text-white" : "text-zinc-400"}
+            />
+            Fazer Login
+          </Link>
+        )}
+      </div>
     </aside>
   );
 }
