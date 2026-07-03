@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // Importe o router do Next.js
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import YouTube from "react-youtube";
 import {
   Play,
+  Pause,
   SkipBack,
   SkipForward,
   Shuffle,
@@ -14,38 +16,82 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-export default function NowPlaying() {
-  const router = useRouter(); // Inicialize o router
-  const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
+type Track = {
+  id: number;
+  title: string;
+  artist: string;
+  duration: string;
+  youtubeUrl: string; // <- precisa vir do seu backend (music.youtubeUrl)
+};
 
-  // Fila simulada
-  const queue = [
-    {
-      id: 1,
-      title: "Smells Like Teen Spirit",
-      artist: "Nirvana",
-      duration: "5:01",
-    },
-    { id: 2, title: "In The End", artist: "Linkin Park", duration: "3:36" },
-    {
-      id: 3,
-      title: "Chop Suey!",
-      artist: "System Of A Down",
-      duration: "3:30",
-    },
-    { id: 4, title: "Numb", artist: "Linkin Park", duration: "3:07" },
-    {
-      id: 5,
-      title: "Bring Me To Life",
-      artist: "Evanescence",
-      duration: "3:55",
-    },
-  ];
+export default function NowPlaying() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<any>(null);
+
+  // Fila — troque as youtubeUrl pelos valores reais vindos da sua API
+  const [queue] = useState<Track[]>([
+    { id: 1, title: "Smells Like Teen Spirit", artist: "Nirvana", duration: "5:01", youtubeUrl: "https://www.youtube.com/watch?v=hTWKbfoikeg" },
+    { id: 2, title: "In The End", artist: "Linkin Park", duration: "3:36", youtubeUrl: "https://www.youtube.com/watch?v=eVTXPUF4Oz4" },
+    { id: 3, title: "Chop Suey!", artist: "System Of A Down", duration: "3:30", youtubeUrl: "https://www.youtube.com/watch?v=CSvFpBOe8eY" },
+    { id: 4, title: "Numb", artist: "Linkin Park", duration: "3:07", youtubeUrl: "https://www.youtube.com/watch?v=kXYiU_JCYtU" },
+    { id: 5, title: "Bring Me To Life", artist: "Evanescence", duration: "3:55", youtubeUrl: "https://www.youtube.com/watch?v=3YxaaGgTQYM" },
+  ]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentTrack = queue[currentIndex];
+
+  const extractVideoId = (url: string) => {
+    const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/);
+    return match ? match[1] : "";
+  };
+
+  const opts = {
+    height: "100%",
+    width: "100%",
+    playerVars: { autoplay: 1, rel: 0 },
+  };
+
+  // Quando o player fica pronto, registra globalmente (mesmo padrão do AlbumDetails)
+  const onPlayerReady = (event: any) => {
+    playerRef.current = event.target;
+    (window as any).ytPlayer = event.target;
+  };
+
+  const onPlayerEnd = () => {
+    playNext();
+  };
+
+  const togglePlay = () => {
+    const player = (window as any).ytPlayer;
+    if (!player) return;
+    if (isPlaying) {
+      player.pauseVideo();
+    } else {
+      player.playVideo();
+    }
+  };
+
+  const playTrack = (index: number) => {
+    setCurrentIndex(index);
+    const videoId = extractVideoId(queue[index].youtubeUrl);
+    const player = (window as any).ytPlayer;
+    if (player && videoId) {
+      player.loadVideoById(videoId);
+    }
+  };
+
+  const playNext = () => {
+    if (currentIndex < queue.length - 1) playTrack(currentIndex + 1);
+  };
+
+  const playPrevious = () => {
+    if (currentIndex > 0) playTrack(currentIndex - 1);
+  };
 
   return (
-    // Adicionei um 'relative' e um 'pt-12' no container principal para dar espaço ao botão
     <div className="relative flex flex-col lg:flex-row gap-10 h-full max-w-7xl mx-auto pt-12 lg:pt-0">
-      {/* Botão de Minimizar / Voltar absoluto no topo esquerdo */}
       <button
         onClick={() => router.back()}
         className="absolute top-0 left-0 lg:top-4 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-900/50 hover:bg-zinc-800 rounded-full"
@@ -56,11 +102,15 @@ export default function NowPlaying() {
 
       {/* Lado Esquerdo: Player Principal */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
-        <div className="w-full max-w-md aspect-square bg-zinc-800 rounded-md shadow-2xl overflow-hidden mt-4 lg:mt-0">
-          <img
-            src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=600&h=600"
-            alt="Capa do Álbum"
-            className="w-full h-full object-cover"
+        <div className="w-full max-w-md aspect-square bg-black rounded-md shadow-2xl overflow-hidden mt-4 lg:mt-0">
+          <YouTube
+            videoId={extractVideoId(currentTrack.youtubeUrl)}
+            opts={opts}
+            onReady={onPlayerReady}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnd={onPlayerEnd}
+            className="w-full h-full"
           />
         </div>
 
@@ -68,59 +118,42 @@ export default function NowPlaying() {
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <h1 className="text-3xl font-extrabold text-white">
-                Música Selecionada
+                {currentTrack.title}
               </h1>
               <span className="text-lg text-zinc-400">
-                Banda / Artista • Álbum
+                {currentTrack.artist}
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <ThumbsDown
-                size={24}
-                className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
-              />
-              <ThumbsUp
-                size={24}
-                className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
-              />
-              <MoreVertical
-                size={24}
-                className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="h-1.5 rounded-full w-full bg-zinc-700 cursor-pointer relative group">
-              <div className="bg-red-500 w-1/3 h-full rounded-full absolute top-0 left-0"></div>
-              <div className="absolute left-1/3 top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"></div>
-            </div>
-            <div className="flex justify-between text-sm text-zinc-400 font-medium">
-              <span>1:23</span>
-              <span>3:45</span>
+              <ThumbsDown size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
+              <ThumbsUp size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
+              <MoreVertical size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
             </div>
           </div>
 
           <div className="flex justify-between items-center px-4">
-            <Shuffle
-              size={24}
-              className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
-            />
+            <Shuffle size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
             <SkipBack
               size={36}
+              onClick={playPrevious}
               className="text-zinc-200 cursor-pointer hover:text-white transition-colors"
             />
-            <button className="w-20 h-20 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-xl">
-              <Play className="fill-black ml-1" size={32} />
+            <button
+              onClick={togglePlay}
+              className="w-20 h-20 flex items-center justify-center bg-white rounded-full text-black hover:scale-105 transition-transform shadow-xl"
+            >
+              {isPlaying ? (
+                <Pause className="fill-black" size={32} />
+              ) : (
+                <Play className="fill-black ml-1" size={32} />
+              )}
             </button>
             <SkipForward
               size={36}
+              onClick={playNext}
               className="text-zinc-200 cursor-pointer hover:text-white transition-colors"
             />
-            <Repeat
-              size={24}
-              className="text-zinc-400 cursor-pointer hover:text-white transition-colors"
-            />
+            <Repeat size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
           </div>
         </div>
       </div>
@@ -145,13 +178,18 @@ export default function NowPlaying() {
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {activeTab === "queue" ? (
             <div className="flex flex-col gap-1">
-              {queue.map((track) => (
+              {queue.map((track, index) => (
                 <div
                   key={track.id}
-                  className="flex items-center gap-3 p-2 hover:bg-zinc-800/50 rounded-md group transition-colors cursor-pointer"
+                  onClick={() => playTrack(index)}
+                  className={`flex items-center gap-3 p-2 hover:bg-zinc-800/50 rounded-md group transition-colors cursor-pointer ${index === currentIndex ? "bg-zinc-800/70" : ""}`}
                 >
                   <div className="text-zinc-500 text-sm w-4 text-center group-hover:hidden">
-                    {track.id}
+                    {index === currentIndex ? (
+                      <span className="text-red-500">▶</span>
+                    ) : (
+                      index + 1
+                    )}
                   </div>
                   <Play
                     size={14}
@@ -160,14 +198,14 @@ export default function NowPlaying() {
 
                   <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
                     <img
-                      src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=100&h=100"
+                      src={`https://img.youtube.com/vi/${extractVideoId(track.youtubeUrl)}/default.jpg`}
                       alt="Capa"
                       className="w-full h-full object-cover"
                     />
                   </div>
 
                   <div className="flex flex-col flex-1 truncate">
-                    <span className="text-white text-sm font-medium truncate">
+                    <span className={`text-sm font-medium truncate ${index === currentIndex ? "text-red-400" : "text-white"}`}>
                       {track.title}
                     </span>
                     <span className="text-zinc-400 text-xs truncate">

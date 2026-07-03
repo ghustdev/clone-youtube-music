@@ -1,39 +1,78 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import YouTube from "react-youtube";
 import {
   Play,
+  Pause,
   Clock,
-  MoreVertical,
-  Heart,
   Shuffle,
-  PlusCircle,
+  Volume2
 } from "lucide-react";
 
 export default function AlbumDetails() {
-  const params = useParams(); // Pega o ID da URL (ex: /album/123)
-  const albumId = params.id;
+  const params = useParams();
+  const musicId = params.id;
 
-  // No futuro, vocês vão fazer um fetch no Java usando esse albumId
-  // const [album, setAlbum] = useState(null);
-  // useEffect(() => { api.get(`/api/albuns/${albumId}`).then(...) }, [albumId]);
+  const [music, setMusic] = useState<any>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(100);
 
-  const tracks = [
-    { id: 1, title: "Bohemian Rhapsody", artist: "Queen", duration: "5:55" },
-    { id: 2, title: "Don't Stop Me Now", artist: "Queen", duration: "3:29" },
-    { id: 3, title: "Somebody To Love", artist: "Queen", duration: "4:56" },
-    {
-      id: 4,
-      title: "Under Pressure",
-      artist: "Queen & David Bowie",
-      duration: "4:08",
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/musics/${musicId}`)
+      .then((response) => response.json())
+      .then((data) => setMusic(data))
+      .catch((error) => console.error("Erro ao buscar música:", error));
+  }, [musicId]);
+
+  if (!music) {
+    return <div className="p-10 text-white font-bold">Carregando a música...</div>;
+  }
+
+  const youtubeId = music.youtubeUrl ? music.youtubeUrl.split("v=")[1]?.split("&")[0] : "";
+
+  // ESTA É A FUNÇÃO QUE O PLAYER DO RODAPÉ VAI USAR
+  const onPlayerReady = (event: any) => {
+    (window as any).ytPlayer = event.target; // Salva globalmente para o rodapé
+    event.target.setVolume(volume);
+  };
+
+  const togglePlay = () => {
+    const player = (window as any).ytPlayer;
+    if (!player) return;
+
+    if (isPlaying) {
+      player.pauseVideo();
+      setIsPlaying(false);
+    } else {
+      player.playVideo();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = Number(e.target.value);
+    setVolume(newVolume);
+    const player = (window as any).ytPlayer;
+    if (player) {
+      player.setVolume(newVolume);
+    }
+  };
+
+  const opts = {
+    height: '100%',
+    width: '100%',
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      disablekb: 1,
+      rel: 0,
     },
-  ];
+  };
 
   return (
-    <div className="flex flex-col gap-8 pb-24">
-      {/* Cabeçalho do Álbum / Playlist */}
+    <div className="flex flex-col gap-8 pb-24 p-8">
       <div className="flex flex-col md:flex-row items-center md:items-end gap-6 mt-4">
         <img
           src={`https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=300&h=300`}
@@ -41,81 +80,55 @@ export default function AlbumDetails() {
           className="w-56 h-56 shadow-2xl rounded-md object-cover"
         />
         <div className="flex flex-col gap-3 text-center md:text-left">
-          <span className="text-sm font-medium uppercase tracking-wider text-zinc-400">
-            Álbum
-          </span>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-            Queen Classics (ID: {albumId})
-          </h1>
-
+          <span className="text-sm font-medium uppercase tracking-wider text-zinc-400">Single</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">{music.title}</h1>
           <div className="flex items-center justify-center md:justify-start gap-2 text-zinc-400 text-sm mt-2">
-            <span className="text-white font-bold">Queen</span>
-            <span>•</span>
-            <span>2026</span>
-            <span>•</span>
-            <span>4 músicas, 18 minutos</span>
+            <span className="text-white font-bold">{music.artist}</span>
           </div>
 
-          {/* Ações Rápidas */}
           <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
-            <button className="bg-white text-black px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:scale-105 transition-transform">
-              <Play className="fill-black" size={20} /> Tocar
+            <button 
+              onClick={togglePlay}
+              className="bg-white text-black w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            >
+              {isPlaying ? <Pause className="fill-black" size={24} /> : <Play className="fill-black ml-1" size={24} />}
             </button>
-            <button className="bg-zinc-800 text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 hover:scale-105 transition-transform border border-zinc-700">
-              <Shuffle size={20} /> Ordem Aleatória
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
-              <PlusCircle size={24} />
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
-              <MoreVertical size={24} />
-            </button>
+
+            <div className="flex items-center gap-2 bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">
+              <Volume2 size={20} className="text-zinc-400" />
+              <input 
+                type="range" 
+                min="0" max="100" 
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-24 accent-white"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Lista de Músicas */}
-      <div className="mt-8 flex flex-col">
-        {/* Cabeçalho da Tabela */}
-        <div className="grid grid-cols-[30px_1fr_100px] gap-4 px-4 py-2 border-b border-zinc-800 text-sm text-zinc-400 mb-2">
-          <span>#</span>
-          <span>Título</span>
-          <div className="flex justify-end pr-4">
-            <Clock size={16} />
-          </div>
+      {youtubeId && (
+        <div className="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl mt-4">
+          <YouTube 
+            videoId={youtubeId} 
+            opts={opts} 
+            onReady={onPlayerReady}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            className="w-full h-full"
+          />
         </div>
+      )}
 
-        {/* Linhas das Músicas */}
-        <div className="flex flex-col">
-          {tracks.map((track, index) => (
-            <div
-              key={track.id}
-              className="grid grid-cols-[30px_1fr_100px] gap-4 px-4 py-3 hover:bg-zinc-800/60 rounded-md group text-sm items-center transition-colors cursor-pointer"
-            >
-              <div className="flex items-center justify-center w-full">
-                <span className="text-zinc-400 group-hover:hidden">
-                  {index + 1}
-                </span>
-                <Play
-                  size={16}
-                  className="text-white hidden group-hover:block"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <span className="text-white font-medium truncate">
-                  {track.title}
-                </span>
-                <span className="text-zinc-400 text-xs truncate">
-                  {track.artist}
-                </span>
-              </div>
-
-              <span className="text-zinc-400 text-right pr-4">
-                {track.duration}
-              </span>
-            </div>
-          ))}
+      <div className="mt-8 flex flex-col">
+        <div className="grid grid-cols-[30px_1fr_100px] gap-4 px-4 py-2 border-b border-zinc-800 text-sm text-zinc-400 mb-2">
+          <span>#</span><span>Título</span><div className="flex justify-end pr-4"><Clock size={16} /></div>
+        </div>
+        <div className="grid grid-cols-[30px_1fr_100px] gap-4 px-4 py-3 hover:bg-zinc-800/60 rounded-md text-sm items-center">
+          <span className="text-zinc-400 text-center">1</span>
+          <div className="flex flex-col"><span className="text-white font-medium">{music.title}</span></div>
+          <span className="text-zinc-400 text-right pr-4">3:45</span>
         </div>
       </div>
     </div>

@@ -1,62 +1,105 @@
 "use client";
 
-import { useState } from "react";
-import { Search as SearchIcon, Play } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Search as SearchIcon, Music } from "lucide-react";
 
 export default function Search() {
-  const [query, setQuery] = useState("");
+  const [musics, setMusics] = useState<any[]>([]);
+  // Estado para guardar o que o usuário está digitando
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock de resultados (substitua pelo retorno do Java depois)
-  const mockResults = [1, 2, 3, 4];
+  useEffect(() => {
+    // Busca TODAS as músicas do banco Java apenas uma vez ao carregar a página
+    fetch("http://localhost:8080/api/musics")
+      .then((response) => response.json())
+      .then((data) => {
+        setMusics(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar músicas:", error);
+        setIsLoading(false);
+      });
+  }, []);
+
+  // A MÁGICA DA BUSCA ACONTECE AQUI:
+  // Filtramos o array original baseado no texto digitado
+  const filteredMusics = musics.filter((music) => {
+    // Se a barra de busca estiver vazia, não mostra nada (ou mude para true para mostrar todas)
+    if (searchQuery.trim() === "") return true; 
+
+    const termo = searchQuery.toLowerCase();
+    const titulo = music.title ? music.title.toLowerCase() : "";
+    const artista = music.artist ? music.artist.toLowerCase() : "";
+
+    // Retorna a música se o termo digitado estiver no título OU no artista
+    return titulo.includes(termo) || artista.includes(termo);
+  });
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Barra de Pesquisa */}
-      <div className="relative max-w-xl">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <SearchIcon className="text-zinc-400" size={20} />
-        </div>
+    <div className="flex flex-col gap-8 p-8 pb-32">
+      
+      {/* Barra de Busca Gigante */}
+      <div className="relative max-w-2xl mt-4">
+        <SearchIcon 
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400" 
+          size={24} 
+        />
         <input
           type="text"
-          className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder-zinc-400 transition-all"
-          placeholder="Músicas, álbuns ou artistas"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          placeholder="O que você quer ouvir?"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-zinc-900 text-white pl-12 pr-4 py-4 rounded-full border border-zinc-700 focus:outline-none focus:border-white transition-colors text-lg"
         />
       </div>
 
-      {/* Resultados da Pesquisa */}
-      {query && (
-        <div className="mt-4">
-          <h2 className="text-xl font-bold mb-4">
-            Principais resultados para "{query}"
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {mockResults.map((item) => (
-              <div
-                key={item}
-                className="flex flex-col gap-2 group cursor-pointer bg-zinc-900/50 p-4 rounded-lg hover:bg-zinc-800 transition-colors"
-              >
-                <div className="w-full aspect-square bg-zinc-800 rounded-md overflow-hidden relative mb-2">
-                  <img
-                    src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=300&h=300"
-                    alt="Capa"
-                    className="w-full h-full object-cover"
-                  />
-                  <button className="absolute bottom-2 right-2 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Play className="fill-black text-black" size={20} />
-                  </button>
-                </div>
-                <strong className="text-sm font-medium">
-                  Resultado Encontrado {item}
-                </strong>
-                <span className="text-xs text-zinc-400">Música • Artista</span>
+      <div className="flex flex-col gap-4">
+        {isLoading ? (
+          <p className="text-zinc-400 font-medium">Conectando ao servidor...</p>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {searchQuery ? "Resultados da busca" : "Navegar por tudo"}
+            </h2>
+            
+            {filteredMusics.length === 0 ? (
+              <p className="text-zinc-400">
+                Nenhuma música ou artista encontrado para "{searchQuery}".
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {filteredMusics.map((music) => (
+                  <Link 
+                    href={`/album/${music.id}`} 
+                    key={music.id}
+                    className="flex flex-col gap-2 group cursor-pointer"
+                  >
+                    <div className="w-full aspect-square bg-zinc-800 rounded-md overflow-hidden relative shadow-lg">
+                      <img
+                        src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=300&h=300"
+                        alt={music.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                          <Music size={24} className="ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col mt-1">
+                      <strong className="text-white font-medium truncate">{music.title}</strong>
+                      <span className="text-zinc-400 text-sm truncate">{music.artist}</span>
+                    </div>
+                  </Link>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
