@@ -10,6 +10,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
 
   // Estados para o formulário
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -27,8 +28,8 @@ export default function Auth() {
         // Se a linha de cima não der erro (cair no catch), joga pro início!
         router.push("/");
       } else {
-        // Aqui iria a chamada para authService.cadastrar()
-        alert("Ainda precisamos criar o endpoint de cadastro no Java!");
+        await authService.register(name, email, senha);
+        setIsLogin(!isLogin);
       }
     } catch (error) {
       setErro("Credenciais inválidas. Verifique seu e-mail e senha.");
@@ -59,6 +60,8 @@ export default function Auth() {
             <input
               type="text"
               placeholder="Nome"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-md py-3 px-4 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
           )}

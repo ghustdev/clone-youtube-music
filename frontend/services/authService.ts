@@ -21,6 +21,16 @@ export const authService = {
     return response.data;
   },
 
+  register: async (name: string, email: string, password: string) => {
+    const response = await api.post("/api/auth/register", {
+      name,
+      email,
+      password,
+    });
+
+    return response.data;
+  },
+
   logout: () => {
     // Limpa tudo
     localStorage.removeItem("@YTMusic:token");
