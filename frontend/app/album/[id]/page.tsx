@@ -8,7 +8,8 @@ import {
   Pause,
   Clock,
   Shuffle,
-  Volume2
+  Volume2,
+  Heart // <-- Importamos o Coração
 } from "lucide-react";
 
 export default function AlbumDetails() {
@@ -18,6 +19,9 @@ export default function AlbumDetails() {
   const [music, setMusic] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(100);
+  
+  // ESTADOS DO LIKE
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     fetch(`http://localhost:8080/api/musics/${musicId}`)
@@ -26,22 +30,29 @@ export default function AlbumDetails() {
       .catch((error) => console.error("Erro ao buscar música:", error));
   }, [musicId]);
 
+  // VERIFICA SE A MÚSICA JÁ ESTAVA CURTIDA AO CARREGAR
+  useEffect(() => {
+    if (music) {
+      const savedLikes = JSON.parse(localStorage.getItem("@musicapp:likes") || "[]");
+      const alreadyLiked = savedLikes.some((m: any) => m.id === music.id);
+      setIsLiked(alreadyLiked);
+    }
+  }, [music]);
+
   if (!music) {
     return <div className="p-10 text-white font-bold">Carregando a música...</div>;
   }
 
   const youtubeId = music.youtubeUrl ? music.youtubeUrl.split("v=")[1]?.split("&")[0] : "";
-
-  // ESTA É A FUNÇÃO QUE O PLAYER DO RODAPÉ VAI USAR
+  
   const onPlayerReady = (event: any) => {
-    (window as any).ytPlayer = event.target; // Salva globalmente para o rodapé
+    (window as any).ytPlayer = event.target; 
     event.target.setVolume(volume);
   };
 
   const togglePlay = () => {
     const player = (window as any).ytPlayer;
     if (!player) return;
-
     if (isPlaying) {
       player.pauseVideo();
       setIsPlaying(false);
@@ -60,15 +71,26 @@ export default function AlbumDetails() {
     }
   };
 
+  // FUNÇÃO QUE SALVA/REMOVE DOS FAVORITOS
+  const toggleLike = () => {
+    if (!music) return;
+    const savedLikes = JSON.parse(localStorage.getItem("@musicapp:likes") || "[]");
+    let newLikes;
+
+    if (isLiked) {
+      newLikes = savedLikes.filter((m: any) => m.id !== music.id);
+      setIsLiked(false);
+    } else {
+      newLikes = [...savedLikes, music];
+      setIsLiked(true);
+    }
+    localStorage.setItem("@musicapp:likes", JSON.stringify(newLikes));
+  };
+
   const opts = {
     height: '100%',
     width: '100%',
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      rel: 0,
-    },
+    playerVars: { autoplay: 1, controls: 0, disablekb: 1, rel: 0 },
   };
 
   return (
@@ -104,6 +126,18 @@ export default function AlbumDetails() {
                 className="w-24 accent-white"
               />
             </div>
+
+            {/* BOTÃO DE CURTIR */}
+            <button 
+              onClick={toggleLike}
+              className="w-14 h-14 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
+              title="Salvar na Biblioteca"
+            >
+              <Heart 
+                size={28} 
+                className={`transition-colors ${isLiked ? 'text-emerald-500 fill-emerald-500' : 'text-zinc-400 hover:text-white'}`} 
+              />
+            </button>
           </div>
         </div>
       </div>

@@ -10,10 +10,10 @@ import {
   SkipForward,
   Shuffle,
   Repeat,
-  ThumbsUp,
-  ThumbsDown,
+  Heart, // <-- Trocado ThumbsUp por Heart
   MoreVertical,
   ChevronDown,
+  Loader2 
 } from "lucide-react";
 
 type Track = {
@@ -21,7 +21,7 @@ type Track = {
   title: string;
   artist: string;
   duration: string;
-  youtubeUrl: string; // <- precisa vir do seu backend (music.youtubeUrl)
+  youtubeUrl: string; 
 };
 
 export default function NowPlaying() {
@@ -30,19 +30,64 @@ export default function NowPlaying() {
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<any>(null);
 
-  // Fila — troque as youtubeUrl pelos valores reais vindos da sua API
-  const [queue] = useState<Track[]>([
-    { id: 1, title: "Smells Like Teen Spirit", artist: "Nirvana", duration: "5:01", youtubeUrl: "https://www.youtube.com/watch?v=hTWKbfoikeg" },
-    { id: 2, title: "In The End", artist: "Linkin Park", duration: "3:36", youtubeUrl: "https://www.youtube.com/watch?v=eVTXPUF4Oz4" },
-    { id: 3, title: "Chop Suey!", artist: "System Of A Down", duration: "3:30", youtubeUrl: "https://www.youtube.com/watch?v=CSvFpBOe8eY" },
-    { id: 4, title: "Numb", artist: "Linkin Park", duration: "3:07", youtubeUrl: "https://www.youtube.com/watch?v=kXYiU_JCYtU" },
-    { id: 5, title: "Bring Me To Life", artist: "Evanescence", duration: "3:55", youtubeUrl: "https://www.youtube.com/watch?v=3YxaaGgTQYM" },
-  ]);
-
+  const [queue, setQueue] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentTrack = queue[currentIndex];
+
+  // ESTADO DO LIKE
+  const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/musics")
+      .then((res) => res.json())
+      .then((data) => {
+        const formattedData = data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          artist: item.artist || "Artista Desconhecido",
+          duration: item.duration || "0:00",
+          youtubeUrl: item.youtubeUrl || item.url || "", 
+        }));
+        
+        setQueue(formattedData);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar músicas do Java:", err);
+        setIsLoading(false);
+      });
+  }, []);
+
+  // VERIFICA SE A MÚSICA ATUAL ESTÁ CURTIDA (Roda toda vez que a música pula)
+  useEffect(() => {
+    const currentTrack = queue[currentIndex];
+    if (currentTrack) {
+      const savedLikes = JSON.parse(localStorage.getItem("@musicapp:likes") || "[]");
+      const alreadyLiked = savedLikes.some((m: any) => m.id === currentTrack.id);
+      setIsLiked(alreadyLiked);
+    }
+  }, [currentIndex, queue]);
+
+  // FUNÇÃO QUE SALVA/REMOVE DA BIBLIOTECA
+  const toggleLike = () => {
+    const currentTrack = queue[currentIndex];
+    if (!currentTrack) return;
+    
+    const savedLikes = JSON.parse(localStorage.getItem("@musicapp:likes") || "[]");
+    let newLikes;
+
+    if (isLiked) {
+      newLikes = savedLikes.filter((m: any) => m.id !== currentTrack.id);
+      setIsLiked(false);
+    } else {
+      newLikes = [...savedLikes, currentTrack];
+      setIsLiked(true);
+    }
+    localStorage.setItem("@musicapp:likes", JSON.stringify(newLikes));
+  };
 
   const extractVideoId = (url: string) => {
+    if (!url) return "";
     const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/);
     return match ? match[1] : "";
   };
@@ -53,7 +98,6 @@ export default function NowPlaying() {
     playerVars: { autoplay: 1, rel: 0 },
   };
 
-  // Quando o player fica pronto, registra globalmente (mesmo padrão do AlbumDetails)
   const onPlayerReady = (event: any) => {
     playerRef.current = event.target;
     (window as any).ytPlayer = event.target;
@@ -75,7 +119,7 @@ export default function NowPlaying() {
 
   const playTrack = (index: number) => {
     setCurrentIndex(index);
-    const videoId = extractVideoId(queue[index].youtubeUrl);
+    const videoId = extractVideoId(queue[index]?.youtubeUrl);
     const player = (window as any).ytPlayer;
     if (player && videoId) {
       player.loadVideoById(videoId);
@@ -89,6 +133,25 @@ export default function NowPlaying() {
   const playPrevious = () => {
     if (currentIndex > 0) playTrack(currentIndex - 1);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-6rem)] w-full items-center justify-center flex-col gap-4 text-zinc-400">
+        <Loader2 className="animate-spin" size={48} />
+        <p>Carregando músicas do banco de dados...</p>
+      </div>
+    );
+  }
+
+  if (queue.length === 0) {
+    return (
+      <div className="flex h-[calc(100vh-6rem)] w-full items-center justify-center text-zinc-400">
+        <p>Nenhuma música encontrada no banco de dados.</p>
+      </div>
+    );
+  }
+
+  const currentTrack = queue[currentIndex];
 
   return (
     <div className="relative flex flex-col lg:flex-row gap-10 h-full max-w-7xl mx-auto pt-12 lg:pt-0">
@@ -125,8 +188,14 @@ export default function NowPlaying() {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <ThumbsDown size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
-              <ThumbsUp size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
+              
+              {/* NOSSO BOTÃO DE CURTIR */}
+              <Heart 
+                size={24} 
+                onClick={toggleLike}
+                className={`cursor-pointer transition-colors ${isLiked ? 'text-emerald-500 fill-emerald-500' : 'text-zinc-400 hover:text-white'}`} 
+              />
+              
               <MoreVertical size={24} className="text-zinc-400 cursor-pointer hover:text-white transition-colors" />
             </div>
           </div>
