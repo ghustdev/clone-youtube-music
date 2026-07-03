@@ -5,7 +5,7 @@ Este diretório contém a API backend do projeto, desenvolvida com **Java 21**, 
 ## Requisitos
 
 - Java 21 instalado
-- Banco PostgreSQL em execução
+- Docker e Docker Compose instalados para subir o PostgreSQL
 - Porta `8080` livre
 
 ## Configuração local
@@ -24,19 +24,23 @@ Se quiser usar outro banco ou credenciais, defina essas variáveis antes de inic
 ## Como executar localmente
 
 1. Abra um terminal na pasta `backend`.
-2. Garanta que o PostgreSQL esteja rodando e que o banco `youtube_music` exista.
-3. Se quiser usar os valores padrão do projeto, crie o usuário e o banco com as credenciais abaixo:
-
-```sql
-CREATE DATABASE youtube_music;
-CREATE USER music_user WITH PASSWORD 'devs';
-GRANT ALL PRIVILEGES ON DATABASE youtube_music TO music_user;
-```
-
-4. Instale as dependências e inicie a aplicação com o Maven Wrapper:
+2. Suba o PostgreSQL com Docker Compose:
 
 ```bash
-./mvnw spring-boot:run
+docker compose up -d postgres
+```
+
+3. Se quiser acompanhar a inicialização do banco, use:
+
+```bash
+docker compose ps
+docker compose logs -f postgres
+```
+
+4. Inicie a aplicação apontando para o banco do Docker:
+
+```bash
+DATABASE_URL=jdbc:postgresql://localhost:5433/youtube_music ./mvnw spring-boot:run
 ```
 
 5. A API ficará disponível em `http://localhost:8080`.
@@ -67,5 +71,7 @@ http://localhost:8080/swagger-ui.html
 
 - O backend já inclui CORS liberado para os endereços locais mais comuns do frontend.
 - A aplicação cria ou atualiza a estrutura do banco conforme o valor de `spring.jpa.hibernate.ddl-auto`.
-- Se aparecer `password authentication failed for user "music_user"`, o PostgreSQL local não está usando a senha `devs`; ajuste `DATABASE_PASSWORD` ou recrie o usuário com a senha acima.
+- O container usa o volume nomeado `youtube_music_postgres_data`, então os dados persistem mesmo se você remover o container.
+- Depois de reiniciar a máquina, basta rodar `docker compose up -d postgres` de novo; não é preciso recriar banco nem usuário.
+- Esse compose usa a porta `5433` porque já existe outro PostgreSQL ocupando `5432` neste ambiente.
 - Se você estiver no Windows, use `mvnw.cmd` no lugar de `./mvnw`.

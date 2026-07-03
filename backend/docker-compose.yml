@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: youtube-music-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: youtube_music
+      POSTGRES_USER: music_user
+      POSTGRES_PASSWORD: devs
+    ports:
+      - "5433:5432"
+    volumes:
+      - youtube_music_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U music_user -d youtube_music"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  youtube_music_postgres_data:

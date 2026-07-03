@@ -36,6 +36,7 @@ O backend é construído em **Java** com **Spring Boot**, expondo uma API REST c
 ## Funcionalidades
 
 ### Usuário
+
 - ✅ Cadastro e login com e-mail e senha
 - ✅ Reprodução de músicas via links do YouTube
 - ✅ Controles de player: play, pause, avançar, retroceder, shuffle
@@ -49,6 +50,7 @@ O backend é construído em **Java** com **Spring Boot**, expondo uma API REST c
 - ✅ Histórico de músicas ouvidas
 
 ### Administrador
+
 - ✅ CRUD completo de músicas (via links do YouTube)
 - ✅ Listagem, criação, atualização e exclusão de músicas
 - ✅ Painel administrativo dedicado
@@ -57,18 +59,18 @@ O backend é construído em **Java** com **Spring Boot**, expondo uma API REST c
 
 ## Tecnologias Utilizadas
 
-| Camada | Tecnologia |
-|--------|-----------|
-| Backend | Java 21 + Spring Boot 3.x |
-| Segurança | Spring Security + JWT |
-| Banco de Dados | PostgreSQL (ou MySQL) |
-| ORM | Spring Data JPA / Hibernate |
-| Build | Maven |
-| Frontend | HTML + CSS + JavaScript (Vanilla) |
-| Player | YouTube IFrame API |
-| Documentação | Swagger / OpenAPI 3 |
-| Testes | JUnit 5 + Mockito |
-| Versionamento | Git + GitHub |
+| Camada         | Tecnologia                        |
+| -------------- | --------------------------------- |
+| Backend        | Java 21 + Spring Boot 3.x         |
+| Segurança      | Spring Security + JWT             |
+| Banco de Dados | PostgreSQL (ou MySQL)             |
+| ORM            | Spring Data JPA / Hibernate       |
+| Build          | Maven                             |
+| Frontend       | HTML + CSS + JavaScript (Vanilla) |
+| Player         | YouTube IFrame API                |
+| Documentação   | Swagger / OpenAPI 3               |
+| Testes         | JUnit 5 + Mockito                 |
+| Versionamento  | Git + GitHub                      |
 
 ---
 
@@ -120,7 +122,17 @@ cd youtube-music-clone
 
 ### 2. Configurar o banco de dados
 
-Crie um banco de dados no PostgreSQL:
+O jeito mais simples agora é subir tudo com um único comando a partir da raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+Isso sobe PostgreSQL, backend e frontend juntos.
+
+Se quiser subir só o banco para uso local, ainda existe o compose em [`backend/docker-compose.yml`](backend/docker-compose.yml), que expõe o banco na porta `5433` para não conflitar com outros serviços locais.
+
+Se preferir configurar um PostgreSQL manualmente, crie o banco e o usuário abaixo:
 
 ```sql
 CREATE DATABASE youtube_music;
@@ -130,7 +142,7 @@ GRANT ALL PRIVILEGES ON DATABASE youtube_music TO music_user;
 
 ### 3. Configurar as variáveis de ambiente
 
-Edite o arquivo `src/main/resources/application.properties` (ou crie um `.env`):
+Para execução manual sem Docker, edite o arquivo `backend/src/main/resources/application.properties` (ou exporte as variáveis de ambiente):
 
 ```properties
 # Banco de Dados
@@ -151,29 +163,13 @@ jwt.expiration=86400000
 server.port=8080
 ```
 
-### 4. Compilar e executar o backend
+### 4. Rodar a aplicação inteira
 
 ```bash
-# Compilar
-mvn clean install
-
-# Executar
-mvn spring-boot:run
+docker compose up --build
 ```
 
-O servidor estará disponível em: `http://localhost:8080`
-
-### 5. Acessar o frontend
-
-Abra o arquivo `frontend/index.html` diretamente no navegador, ou sirva com qualquer servidor HTTP simples:
-
-```bash
-# Usando Python (opcional)
-cd frontend
-python -m http.server 3000
-```
-
-Acesse: `http://localhost:3000`
+Depois do boot, o frontend fica em `http://localhost:3001` e a API em `http://localhost:8080`.
 
 ### 6. Acessar a documentação da API (Swagger)
 
@@ -270,44 +266,45 @@ youtube-music-clone/
 
 ### Autenticação
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|:---:|
-| `POST` | `/api/auth/register` | Cadastrar novo usuário | ❌ |
-| `POST` | `/api/auth/login` | Realizar login, retorna JWT | ❌ |
+| Método | Endpoint             | Descrição                   | Autenticação |
+| ------ | -------------------- | --------------------------- | :----------: |
+| `POST` | `/api/auth/register` | Cadastrar novo usuário      |      ❌      |
+| `POST` | `/api/auth/login`    | Realizar login, retorna JWT |      ❌      |
 
 ### Músicas
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|:---:|
-| `GET` | `/api/musics` | Listar todas as músicas | ✅ |
-| `GET` | `/api/musics/{id}` | Buscar música por ID | ✅ |
-| `GET` | `/api/musics/search?q={termo}` | Buscar músicas por termo | ✅ |
-| `POST` | `/api/admin/musics` | Criar nova música (Admin) | ✅ Admin |
-| `PUT` | `/api/admin/musics/{id}` | Atualizar música (Admin) | ✅ Admin |
-| `DELETE` | `/api/admin/musics/{id}` | Deletar música (Admin) | ✅ Admin |
+| Método   | Endpoint                       | Descrição                 | Autenticação |
+| -------- | ------------------------------ | ------------------------- | :----------: |
+| `GET`    | `/api/musics`                  | Listar todas as músicas   |      ✅      |
+| `GET`    | `/api/musics/{id}`             | Buscar música por ID      |      ✅      |
+| `GET`    | `/api/musics/search?q={termo}` | Buscar músicas por termo  |      ✅      |
+| `POST`   | `/api/admin/musics`            | Criar nova música (Admin) |   ✅ Admin   |
+| `PUT`    | `/api/admin/musics/{id}`       | Atualizar música (Admin)  |   ✅ Admin   |
+| `DELETE` | `/api/admin/musics/{id}`       | Deletar música (Admin)    |   ✅ Admin   |
 
 ### Playlists
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|:---:|
-| `GET` | `/api/playlists` | Listar playlists do usuário | ✅ |
-| `POST` | `/api/playlists` | Criar nova playlist | ✅ |
-| `PUT` | `/api/playlists/{id}` | Atualizar playlist | ✅ |
-| `DELETE` | `/api/playlists/{id}` | Deletar playlist | ✅ |
-| `POST` | `/api/playlists/{id}/musics/{musicId}` | Adicionar música à playlist | ✅ |
-| `DELETE` | `/api/playlists/{id}/musics/{musicId}` | Remover música da playlist | ✅ |
+| Método   | Endpoint                               | Descrição                   | Autenticação |
+| -------- | -------------------------------------- | --------------------------- | :----------: |
+| `GET`    | `/api/playlists`                       | Listar playlists do usuário |      ✅      |
+| `POST`   | `/api/playlists`                       | Criar nova playlist         |      ✅      |
+| `PUT`    | `/api/playlists/{id}`                  | Atualizar playlist          |      ✅      |
+| `DELETE` | `/api/playlists/{id}`                  | Deletar playlist            |      ✅      |
+| `POST`   | `/api/playlists/{id}/musics/{musicId}` | Adicionar música à playlist |      ✅      |
+| `DELETE` | `/api/playlists/{id}/musics/{musicId}` | Remover música da playlist  |      ✅      |
 
 ### Histórico e Recomendações
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|:---:|
-| `GET` | `/api/history` | Histórico de reprodução | ✅ |
-| `POST` | `/api/history` | Registrar música ouvida | ✅ |
-| `GET` | `/api/recommendations?musicId={id}` | Recomendações pela música atual | ✅ |
+| Método | Endpoint                            | Descrição                       | Autenticação |
+| ------ | ----------------------------------- | ------------------------------- | :----------: |
+| `GET`  | `/api/history`                      | Histórico de reprodução         |      ✅      |
+| `POST` | `/api/history`                      | Registrar música ouvida         |      ✅      |
+| `GET`  | `/api/recommendations?musicId={id}` | Recomendações pela música atual |      ✅      |
 
 ### Exemplos de Requisição
 
 **Login:**
+
 ```json
 POST /api/auth/login
 {
@@ -317,6 +314,7 @@ POST /api/auth/login
 ```
 
 **Criar Música (Admin):**
+
 ```json
 POST /api/admin/musics
 Authorization: Bearer <token>
@@ -375,55 +373,55 @@ play_history
 
 ## Atores e Permissões
 
-| Ator | Descrição | Permissões |
-|------|-----------|-----------|
-| **Usuário** | Usuário autenticado com conta gratuita | Reproduzir, buscar, gerenciar playlists, ver histórico |
-| **Administrador** | Gestor do catálogo musical | Tudo do Usuário + CRUD completo de músicas |
+| Ator              | Descrição                              | Permissões                                             |
+| ----------------- | -------------------------------------- | ------------------------------------------------------ |
+| **Usuário**       | Usuário autenticado com conta gratuita | Reproduzir, buscar, gerenciar playlists, ver histórico |
+| **Administrador** | Gestor do catálogo musical             | Tudo do Usuário + CRUD completo de músicas             |
 
 ---
 
 ## Casos de Uso Implementados
 
-| ID | Nome | Ator | Requisitos |
-|----|------|------|------------|
-| UC01 | Cadastrar Usuário | Usuário (novo) | RF01 |
-| UC02 | Realizar Login | Usuário | RF01 |
-| UC03 | Reproduzir Música | Usuário | RF02, RF03, RF04 |
-| UC04 | Buscar Música ou Artista | Usuário | RF05, RF06 |
-| UC05 | Gerenciar Playlist | Usuário | RF07, RF08 |
-| UC06 | CRUD de Músicas | Administrador | RF09 |
+| ID   | Nome                     | Ator           | Requisitos       |
+| ---- | ------------------------ | -------------- | ---------------- |
+| UC01 | Cadastrar Usuário        | Usuário (novo) | RF01             |
+| UC02 | Realizar Login           | Usuário        | RF01             |
+| UC03 | Reproduzir Música        | Usuário        | RF02, RF03, RF04 |
+| UC04 | Buscar Música ou Artista | Usuário        | RF05, RF06       |
+| UC05 | Gerenciar Playlist       | Usuário        | RF07, RF08       |
+| UC06 | CRUD de Músicas          | Administrador  | RF09             |
 
 ---
 
 ## Requisitos Funcionais
 
-| ID | Descrição | Prioridade |
-|----|-----------|:----------:|
-| RF01 | Permitir login e logout da conta do usuário | Média |
-| RF02 | Reproduzir faixas musicais em formato de áudio e vídeo | Alta |
-| RF03 | Controlar reprodução: play, pause, avançar, retroceder e shuffle | Alta |
-| RF04 | Exibir progresso da reprodução com controle de tempo | Alta |
-| RF05 | Permitir busca de músicas, artistas, álbuns e playlists | Alta |
-| RF06 | Exibir resultados de busca com filtros por categoria | Média |
-| RF07 | Criar, editar e excluir playlists personalizadas | Alta |
-| RF08 | Adicionar e remover músicas de playlists | Alta |
-| RF09 | Criar, editar e excluir músicas por links do YouTube (Admin) | Alta |
-| RF10 | Gerar filas de reprodução automáticas baseadas no histórico | Média |
-| RF11 | Recomendar músicas com base na música atual | Média |
-| RF12 | Controlar volume e qualidade de áudio da reprodução | Média |
-| RF13 | Exibir histórico de músicas ouvidas pelo usuário | Média |
+| ID   | Descrição                                                        | Prioridade |
+| ---- | ---------------------------------------------------------------- | :--------: |
+| RF01 | Permitir login e logout da conta do usuário                      |   Média    |
+| RF02 | Reproduzir faixas musicais em formato de áudio e vídeo           |    Alta    |
+| RF03 | Controlar reprodução: play, pause, avançar, retroceder e shuffle |    Alta    |
+| RF04 | Exibir progresso da reprodução com controle de tempo             |    Alta    |
+| RF05 | Permitir busca de músicas, artistas, álbuns e playlists          |    Alta    |
+| RF06 | Exibir resultados de busca com filtros por categoria             |   Média    |
+| RF07 | Criar, editar e excluir playlists personalizadas                 |    Alta    |
+| RF08 | Adicionar e remover músicas de playlists                         |    Alta    |
+| RF09 | Criar, editar e excluir músicas por links do YouTube (Admin)     |    Alta    |
+| RF10 | Gerar filas de reprodução automáticas baseadas no histórico      |   Média    |
+| RF11 | Recomendar músicas com base na música atual                      |   Média    |
+| RF12 | Controlar volume e qualidade de áudio da reprodução              |   Média    |
+| RF13 | Exibir histórico de músicas ouvidas pelo usuário                 |   Média    |
 
 ---
 
 ## Requisitos Não Funcionais
 
-| ID | Categoria | Descrição |
-|----|-----------|-----------|
-| RNF01 | Desempenho | O sistema deve iniciar a reprodução em no máximo 3 segundos em banda larga |
-| RNF02 | Segurança | Senhas armazenadas com hash BCrypt; dados com criptografia AES-256 |
-| RNF03 | Usabilidade | Interface responsiva para dispositivos móveis e desktop |
-| RNF04 | Escalabilidade | Suporte a até 10 usuários simultâneos |
-| RNF05 | Compatibilidade | Funciona nos navegadores Chrome, Firefox, Safari e Edge |
+| ID    | Categoria       | Descrição                                                                  |
+| ----- | --------------- | -------------------------------------------------------------------------- |
+| RNF01 | Desempenho      | O sistema deve iniciar a reprodução em no máximo 3 segundos em banda larga |
+| RNF02 | Segurança       | Senhas armazenadas com hash BCrypt; dados com criptografia AES-256         |
+| RNF03 | Usabilidade     | Interface responsiva para dispositivos móveis e desktop                    |
+| RNF04 | Escalabilidade  | Suporte a até 10 usuários simultâneos                                      |
+| RNF05 | Compatibilidade | Funciona nos navegadores Chrome, Firefox, Safari e Edge                    |
 
 ---
 

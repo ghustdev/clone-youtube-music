@@ -29,7 +29,7 @@ export const authService = {
     // Dispara o alarme de logout
     window.dispatchEvent(new Event("auth-change"));
 
-    window.location.href = "/auth";
+    window.location.href = "/";
   },
 
   isAutenticado: () => {
