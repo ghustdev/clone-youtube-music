@@ -1,6 +1,26 @@
+"use client";
+
+import { useEffect, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { authService } from "@/services/authService";
 
 export default function Library() {
+  const router = useRouter();
+  const isAuthenticated = useSyncExternalStore(
+    authService.subscribeAuthChanges,
+    authService.getAuthSnapshot,
+    () => false,
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/auth");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) return null;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">

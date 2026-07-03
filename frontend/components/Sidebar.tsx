@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -20,34 +20,25 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [isLogado, setIsLogado] = useState(false);
-  const [nomeUsuario, setNomeUsuario] = useState("Usuário Logado");
+  const userSnapshot = useSyncExternalStore(
+    authService.subscribeAuthChanges,
+    authService.getUserSnapshot,
+    () => null,
+  );
 
-  useEffect(() => {
-    // Função que checa o armazenamento
-    const checkAuth = () => {
-      const token = localStorage.getItem("@YTMusic:token");
-      const nome = localStorage.getItem("@YTMusic:nome");
+  const usuario = useMemo(() => {
+    if (!userSnapshot) return null;
 
-      if (token) {
-        setIsLogado(true);
-        if (nome) setNomeUsuario(nome);
-      } else {
-        setIsLogado(false);
-      }
-    };
+    try {
+      return JSON.parse(userSnapshot) as { name?: string; isAdmin?: boolean };
+    } catch {
+      return null;
+    }
+  }, [userSnapshot]);
 
-    // Roda a checagem na primeira vez que a tela abre
-    checkAuth();
-
-    // Fica de plantão aguardando o evento 'auth-change' do authService
-    window.addEventListener("auth-change", checkAuth);
-
-    // Limpa o plantão se o componente for destruído (boa prática do React)
-    return () => {
-      window.removeEventListener("auth-change", checkAuth);
-    };
-  }, []); // Removemos o pathname daqui, agora dependemos só do evento
+  const isLogado = !!userSnapshot;
+  const isAdmin = !!usuario?.isAdmin;
+  const nomeUsuario = usuario?.name ?? "Usuário Logado";
 
   const handleLogout = () => {
     authService.logout();
@@ -60,6 +51,14 @@ export default function Sidebar() {
     { href: "/search", label: "Buscar", icon: Search },
     { href: "/library", label: "Biblioteca", icon: Library },
   ];
+
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.href === "/library") {
+      return isLogado;
+    }
+
+    return true;
+  });
   return (
     <aside className="w-64 bg-black p-6 flex flex-col gap-6 hidden md:flex border-r border-zinc-900 justify-between">
       <div>
@@ -69,7 +68,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex flex-col gap-4">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
@@ -90,17 +89,18 @@ export default function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4">
-        {/* Painel Admin só precisa aparecer como uma opção extra */}
-        <Link
-          href="/admin"
-          className={`flex items-center gap-4 text-sm font-medium transition-colors ${pathname === "/admin" ? "text-white font-semibold" : "text-zinc-400 hover:text-white"}`}
-        >
-          <Settings
-            size={20}
-            className={pathname === "/admin" ? "text-white" : "text-zinc-400"}
-          />
-          Painel Admin
-        </Link>
+        {isLogado && isAdmin && (
+          <Link
+            href="/admin"
+            className={`flex items-center gap-4 text-sm font-medium transition-colors ${pathname === "/admin" ? "text-white font-semibold" : "text-zinc-400 hover:text-white"}`}
+          >
+            <Settings
+              size={20}
+              className={pathname === "/admin" ? "text-white" : "text-zinc-400"}
+            />
+            Painel Admin
+          </Link>
+        )}
 
         {/* Caixinha Dinâmica de Perfil / Login */}
         {isLogado ? (

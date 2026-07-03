@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Plus,
   Edit2,
@@ -8,17 +9,18 @@ import {
   Link as LinkIcon,
   AlertCircle,
 } from "lucide-react";
+import { authService } from "@/services/authService";
 import { musicaService, Musica } from "@/services/musicaService";
 
 export default function Admin() {
   const [musicas, setMusicas] = useState<Musica[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-
-  // Busca os dados do Java assim que a tela carrega
-  useEffect(() => {
-    carregarMusicas();
-  }, []);
+  const isAdmin = useSyncExternalStore(
+    authService.subscribeAuthChanges,
+    authService.getAdminSnapshot,
+    () => false,
+  );
 
   const carregarMusicas = async () => {
     try {
@@ -37,6 +39,17 @@ export default function Admin() {
     }
   };
 
+  // Busca os dados do Java assim que a tela carrega
+  useEffect(() => {
+    if (isAdmin) {
+      const timer = window.setTimeout(() => {
+        void carregarMusicas();
+      }, 0);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [isAdmin]);
+
   const handleDeletar = async (id?: number) => {
     if (!id) return;
 
@@ -45,7 +58,7 @@ export default function Admin() {
         await musicaService.deletar(id);
         // Atualiza a lista na tela removendo a música deletada
         setMusicas(musicas.filter((m) => m.id !== id));
-      } catch (error) {
+      } catch {
         alert("Erro ao excluir a música.");
       }
     }
@@ -53,72 +66,104 @@ export default function Admin() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-red-500">
-            Painel do Administrador
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            Gerenciamento do catálogo musical (CRUD)
-          </p>
-        </div>
-        <button className="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
-          <Plus size={18} /> Nova Música
-        </button>
-      </div>
+      {isAdmin ? (
+        <>
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-red-500">
+                Painel do Administrador
+              </h1>
+              <p className="text-zinc-400 mt-1">
+                Gerenciamento do catálogo musical (CRUD)
+              </p>
+            </div>
+            <button className="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
+              <Plus size={18} /> Nova Música
+            </button>
+          </div>
 
-      {/* Tratamento de Exceções Visual (Requisito do Trabalho) */}
-      {erro && (
-        <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-md flex items-center gap-3">
-          <AlertCircle size={20} />
-          <p>{erro}</p>
+          {/* Tratamento de Exceções Visual (Requisito do Trabalho) */}
+          {erro && (
+            <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-md flex items-center gap-3">
+              <AlertCircle size={20} />
+              <p>{erro}</p>
+            </div>
+          )}
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-[2fr_2fr_3fr_100px] gap-4 px-6 py-4 bg-zinc-950/50 border-b border-zinc-800 text-sm font-semibold text-zinc-400">
+              <span>Título</span>
+              <span>Artista</span>
+              <span>Link YouTube</span>
+              <span className="text-right">Ações</span>
+            </div>
+
+            <div className="flex flex-col relative min-h-[100px]">
+              {loading ? (
+                <div className="flex justify-center items-center p-8 text-zinc-500">
+                  Carregando dados do servidor...
+                </div>
+              ) : (
+                musicas.map((musica) => (
+                  <div
+                    key={musica.id}
+                    className="grid grid-cols-[2fr_2fr_3fr_100px] gap-4 px-6 py-4 items-center border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors text-sm"
+                  >
+                    <span className="font-medium text-white">
+                      {musica.title}
+                    </span>
+                    <span className="text-zinc-400">{musica.artist}</span>
+                    <span className="text-zinc-500 flex items-center gap-2 truncate">
+                      <LinkIcon size={14} /> {musica.youtubeUrl}
+                    </span>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        className="text-zinc-400 hover:text-white transition-colors"
+                        title="Editar"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeletar(musica.id)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-950/60 p-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-100">
+              Área restrita
+            </h1>
+            <p className="mt-2 text-zinc-400">
+              Esta seção está reservada para administradores autenticados.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="min-h-32 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4">
+              <p className="text-sm font-medium text-zinc-300">Bloco 1</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                Espaço para os detalhes da versão restrita.
+              </p>
+            </div>
+            <div className="min-h-32 rounded-xl border border-zinc-800 bg-zinc-900/70 p-4">
+              <p className="text-sm font-medium text-zinc-300">Bloco 2</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                Você pode substituir este conteúdo depois.
+              </p>
+            </div>
+          </div>
         </div>
       )}
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[2fr_2fr_3fr_100px] gap-4 px-6 py-4 bg-zinc-950/50 border-b border-zinc-800 text-sm font-semibold text-zinc-400">
-          <span>Título</span>
-          <span>Artista</span>
-          <span>Link YouTube</span>
-          <span className="text-right">Ações</span>
-        </div>
-
-        <div className="flex flex-col relative min-h-[100px]">
-          {loading ? (
-            <div className="flex justify-center items-center p-8 text-zinc-500">
-              Carregando dados do servidor...
-            </div>
-          ) : (
-            musicas.map((musica) => (
-              <div
-                key={musica.id}
-                className="grid grid-cols-[2fr_2fr_3fr_100px] gap-4 px-6 py-4 items-center border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors text-sm"
-              >
-                <span className="font-medium text-white">{musica.title}</span>
-                <span className="text-zinc-400">{musica.artist}</span>
-                <span className="text-zinc-500 flex items-center gap-2 truncate">
-                  <LinkIcon size={14} /> {musica.youtubeUrl}
-                </span>
-                <div className="flex items-center justify-end gap-3">
-                  <button
-                    className="text-zinc-400 hover:text-white transition-colors"
-                    title="Editar"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDeletar(musica.id)}
-                    className="text-zinc-400 hover:text-red-500 transition-colors"
-                    title="Excluir"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 }
