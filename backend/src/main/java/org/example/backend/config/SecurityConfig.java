@@ -49,8 +49,9 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/musics", "/api/musics/**", "/api/search",
-                                "/api/recommendations")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/musics", "/api/musics/**",
+                                "/api/search", "/api/recommendations")
                         .permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",

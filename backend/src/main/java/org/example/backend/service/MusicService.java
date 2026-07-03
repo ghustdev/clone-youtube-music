@@ -65,6 +65,14 @@ public class MusicService {
     }
 
     @Transactional(readOnly = true)
+    public List<MusicResponse> listNewReleases() {
+        return musicaRepository.findAllByOrderByCriadoEmDesc()
+                .stream()
+                .map(DtoMapper::toMusicResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public MusicResponse getById(Long id) {
         return DtoMapper.toMusicResponse(getEntity(id));
     }

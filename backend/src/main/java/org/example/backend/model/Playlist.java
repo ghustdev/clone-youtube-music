@@ -37,6 +37,9 @@ public class Playlist {
     @Column(length = 500)
     private String descricao;
 
+    @Column(name = "capa_url", length = 600)
+    private String capaUrl;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -63,6 +66,13 @@ public class Playlist {
     public Playlist(String nome, String descricao, Usuario usuario) {
         this.nome = nome;
         this.descricao = descricao;
+        this.usuario = usuario;
+    }
+
+    public Playlist(String nome, String descricao, String capaUrl, Usuario usuario) {
+        this.nome = nome;
+        this.descricao = descricao;
+        this.capaUrl = capaUrl;
         this.usuario = usuario;
     }
 
@@ -103,6 +113,14 @@ public class Playlist {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
+    }
+
+    public String getCapaUrl() {
+        return capaUrl;
+    }
+
+    public void setCapaUrl(String capaUrl) {
+        this.capaUrl = capaUrl;
     }
 
     public Usuario getUsuario() {

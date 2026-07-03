@@ -64,7 +64,7 @@ public class PlaylistService {
         Usuario usuario = currentUserService.getCurrentUser();
         String name = request.name().trim();
         ensureNameAvailable(usuario, name);
-        Playlist playlist = playlistRepository.save(new Playlist(name, trimToNull(request.description()), usuario));
+        Playlist playlist = playlistRepository.save(new Playlist(name, trimToNull(request.description()), trimToNull(request.capaUrl()), usuario));
         return DtoMapper.toPlaylistResponse(playlist);
     }
 
@@ -78,6 +78,7 @@ public class PlaylistService {
         }
         playlist.renomear(name);
         playlist.setDescricao(trimToNull(request.description()));
+        playlist.setCapaUrl(trimToNull(request.capaUrl()));
         return DtoMapper.toPlaylistResponse(playlistRepository.save(playlist));
     }
 

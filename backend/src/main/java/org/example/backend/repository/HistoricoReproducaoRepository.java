@@ -14,4 +14,10 @@ public interface HistoricoReproducaoRepository extends JpaRepository<HistoricoRe
     List<HistoricoReproducao> findTop50ByUsuarioOrderByReproduzidoEmDesc(Usuario usuario);
 
     void deleteByMusica(Musica musica);
+
+    void deleteByMusica_Album(org.example.backend.model.Album album);
+
+    void deleteByMusica_Artista(org.example.backend.model.Artista artista);
+
+    void deleteByMusica_Genero(org.example.backend.model.Genero genero);
 }

@@ -1,5 +1,8 @@
 package org.example.backend.dto;
 
+import org.example.backend.model.Album;
+import org.example.backend.model.Artista;
+import org.example.backend.model.Genero;
 import org.example.backend.model.HistoricoReproducao;
 import org.example.backend.model.Musica;
 import org.example.backend.model.Playlist;
@@ -25,12 +28,41 @@ public final class DtoMapper {
         return new MusicResponse(
                 musica.getId(),
                 musica.getTitulo(),
-                musica.getArtista().getNome(),
-                musica.getAlbum().getTitulo(),
+                new MusicResponse.ArtistInfo(
+                        musica.getArtista().getId(),
+                        musica.getArtista().getNome(),
+                        musica.getArtista().getFotoUrl(),
+                        musica.getArtista().getBiografia()
+                ),
+                new MusicResponse.AlbumInfo(
+                        musica.getAlbum().getId(),
+                        musica.getAlbum().getTitulo(),
+                        musica.getAlbum().getCapaUrl(),
+                        musica.getAlbum().getAnoLancamento()
+                ),
                 musica.getGenero().getNome(),
                 musica.getUrlYoutube(),
                 musica.getDuracaoSegundos(),
                 musica.getCriadoEm()
+        );
+    }
+
+    public static ArtistaResponse toArtistaResponse(Artista artista) {
+        return new ArtistaResponse(artista.getId(), artista.getNome(), artista.getBiografia(), artista.getFotoUrl());
+    }
+
+    public static GeneroResponse toGeneroResponse(Genero genero) {
+        return new GeneroResponse(genero.getId(), genero.getNome());
+    }
+
+    public static AlbumResponse toAlbumResponse(Album album) {
+        return new AlbumResponse(
+                album.getId(),
+                album.getTitulo(),
+                album.getArtista().getId(),
+                album.getArtista().getNome(),
+                album.getCapaUrl(),
+                album.getAnoLancamento()
         );
     }
 
@@ -39,6 +71,7 @@ public final class DtoMapper {
                 playlist.getId(),
                 playlist.getNome(),
                 playlist.getDescricao(),
+                playlist.getCapaUrl(),
                 playlist.getUsuario().getId(),
                 playlist.getMusicas().stream().map(DtoMapper::toMusicResponse).toList(),
                 playlist.getCriadoEm()

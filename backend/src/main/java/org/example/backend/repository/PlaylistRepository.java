@@ -23,6 +23,12 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
     @EntityGraph(attributePaths = "musicas")
     List<Playlist> findAllByMusicas_Id(Long musicaId);
 
+    List<Playlist> findAllByMusicas_Album_Id(Long albumId);
+
+    List<Playlist> findAllByMusicas_Artista_Id(Long artistaId);
+
+    List<Playlist> findAllByMusicas_Genero_Id(Long generoId);
+
     @Query("""
             select distinct p from Playlist p
             left join fetch p.musicas

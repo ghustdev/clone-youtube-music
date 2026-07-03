@@ -21,4 +21,13 @@ public interface FilaReproducaoRepository extends JpaRepository<FilaReproducao, 
 
     @EntityGraph(attributePaths = {"filaMusicas", "filaMusicas.musica"})
     List<FilaReproducao> findAllByFilaMusicas_Musica_Id(Long musicaId);
+
+    @EntityGraph(attributePaths = {"filaMusicas", "filaMusicas.musica"})
+    List<FilaReproducao> findAllByFilaMusicas_Musica_Album_Id(Long albumId);
+
+    @EntityGraph(attributePaths = {"filaMusicas", "filaMusicas.musica"})
+    List<FilaReproducao> findAllByFilaMusicas_Musica_Artista_Id(Long artistaId);
+
+    @EntityGraph(attributePaths = {"filaMusicas", "filaMusicas.musica"})
+    List<FilaReproducao> findAllByFilaMusicas_Musica_Genero_Id(Long generoId);
 }

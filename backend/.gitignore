@@ -15,7 +15,11 @@ data/
 .sts4-cache
 
 ### IntelliJ IDEA ###
+.env/
 .idea
+.idea/
+.mvn
+.mvn/
 *.iws
 *.iml
 *.ipr

@@ -38,4 +38,13 @@ public interface MusicaRepository extends JpaRepository<Musica, Long> {
 
     @EntityGraph(attributePaths = {"artista", "album", "genero"})
     List<Musica> findTop10ByIdNotOrderByTituloAsc(Long id);
+
+    @EntityGraph(attributePaths = {"artista", "album", "genero"})
+    List<Musica> findAllByOrderByCriadoEmDesc();
+
+    List<Musica> findAllByAlbum_Id(Long albumId);
+
+    List<Musica> findAllByArtista_Id(Long artistaId);
+
+    List<Musica> findAllByGenero_Id(Long generoId);
 }

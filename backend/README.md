@@ -1,31 +1,16 @@
-# Backend do YouTube Music Clone
+# Backend — YouTube Music Clone
 
-Este diretório contém a API backend do projeto, desenvolvida com **Java 21**, **Spring Boot 3.3** e **Maven**.
+API REST desenvolvida com **Java 21**, **Spring Boot 3.3** e **Maven**.
 
 ## Requisitos
 
-- Java 21 instalado
-- Banco PostgreSQL em execução
+- Java 21
+- PostgreSQL em execução
 - Porta `8080` livre
 
-## Configuração local
+## Configuração do banco
 
-O backend lê a configuração principal por variáveis de ambiente, com estes valores padrão:
-
-- `SERVER_PORT=8080`
-- `DATABASE_URL=jdbc:postgresql://localhost:5432/youtube_music`
-- `DATABASE_USERNAME=music_user`
-- `DATABASE_PASSWORD=devs`
-- `JWT_SECRET=dev-only-secret-key-change-me-with-at-least-32-characters`
-- `JWT_EXPIRATION_MS=86400000`
-
-Se quiser usar outro banco ou credenciais, defina essas variáveis antes de iniciar a aplicação.
-
-## Como executar localmente
-
-1. Abra um terminal na pasta `backend`.
-2. Garanta que o PostgreSQL esteja rodando e que o banco `youtube_music` exista.
-3. Se quiser usar os valores padrão do projeto, crie o usuário e o banco com as credenciais abaixo:
+Crie o banco e o usuário no PostgreSQL:
 
 ```sql
 CREATE DATABASE youtube_music;
@@ -33,39 +18,63 @@ CREATE USER music_user WITH PASSWORD 'devs';
 GRANT ALL PRIVILEGES ON DATABASE youtube_music TO music_user;
 ```
 
-4. Instale as dependências e inicie a aplicação com o Maven Wrapper:
+## Executando localmente
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-5. A API ficará disponível em `http://localhost:8080`.
+A API ficará disponível em `http://localhost:8080`.
+
+> No Windows use `mvnw.cmd` no lugar de `./mvnw`.
+
+## Usuário admin padrão
+
+Na primeira execução, a aplicação cria automaticamente um usuário administrador com as credenciais abaixo (seed automático):
+
+| Campo | Valor padrão |
+|-------|-------------|
+| Nome  | `Exemplo` |
+| E-mail | `admin@exemplo.local` |
+| Senha | `exemplo` |
+
+## Variáveis de ambiente
+
+Todas as configurações possuem valores padrão e só precisam ser definidas se você quiser sobrescrever algo.
+
+| Variável | Padrão |
+|----------|--------|
+| `SERVER_PORT` | `8080` |
+| `JWT_SECRET` | `dev-only-secret-key-change-me-with-at-least-32-characters` |
+| `JWT_EXPIRATION_MS` | `86400000` (24 h) |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000`, `http://localhost:5173` e variantes `127.0.0.1` |
+| `SEED_ENABLED` | `true` |
+| `ADMIN_NAME` | `Exemplo` |
+| `ADMIN_EMAIL` | `admin@exemplo.local` |
+| `ADMIN_PASSWORD` | `exemplo` |
+| `JPA_DDL_AUTO` | `update` |
+| `JPA_SHOW_SQL` | `false` |
 
 ## Comandos úteis
 
-Gerar o build do projeto:
-
 ```bash
+# Build
 ./mvnw clean package
-```
 
-Executar os testes:
-
-```bash
+# Testes
 ./mvnw test
 ```
 
 ## Documentação da API
 
-Com a aplicação em execução, acesse o Swagger UI em:
+Com a aplicação rodando, acesse o Swagger UI em:
 
-```text
+```
 http://localhost:8080/swagger-ui.html
 ```
 
 ## Observações
 
-- O backend já inclui CORS liberado para os endereços locais mais comuns do frontend.
-- A aplicação cria ou atualiza a estrutura do banco conforme o valor de `spring.jpa.hibernate.ddl-auto`.
-- Se aparecer `password authentication failed for user "music_user"`, o PostgreSQL local não está usando a senha `devs`; ajuste `DATABASE_PASSWORD` ou recrie o usuário com a senha acima.
-- Se você estiver no Windows, use `mvnw.cmd` no lugar de `./mvnw`.
+- Se aparecer `password authentication failed for user "music_user"`, recrie o usuário com a senha `devs` ou defina `DATABASE_PASSWORD` com a senha correta.
+- Para desabilitar o seed do admin em produção, defina `SEED_ENABLED=false`.
+- Em produção, substitua `JWT_SECRET` por uma chave forte com pelo menos 32 caracteres.
