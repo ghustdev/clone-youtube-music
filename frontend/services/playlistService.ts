@@ -1,4 +1,3 @@
-// services/playlistService.ts
 import { api } from "./api";
 import { Musica } from "./musicaService";
 
@@ -25,21 +24,24 @@ export const playlistService = {
     },
 
     obterPorId: async (id: number): Promise<Playlist> => {
+        // CORREÇÃO: Uso de crases para a interpolação funcionar
         const response = await api.get(`/api/playlists/${id}`);
         return response.data;
     },
 
-    criar: async (playlist: any): Promise<Playlist> => {
-        const response = await api.post("/api/playlists", playlist);
+    criar: async (nome: string): Promise<Playlist> => {
+        const response = await api.post("/api/playlists", { nome });
         return response.data;
     },
 
     atualizar: async (id: number, playlist: any): Promise<Playlist> => {
+        // CORREÇÃO: Uso de crases
         const response = await api.put(`/api/playlists/${id}`, playlist);
         return response.data;
     },
 
     deletar: async (id: number): Promise<void> => {
+        // CORREÇÃO: Uso de crases
         await api.delete(`/api/playlists/${id}`);
     },
 };

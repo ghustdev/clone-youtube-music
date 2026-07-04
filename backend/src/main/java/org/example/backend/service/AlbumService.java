@@ -14,6 +14,7 @@ import org.example.backend.model.Musica;
 import org.example.backend.model.Playlist;
 import org.example.backend.repository.AlbumRepository;
 import org.example.backend.repository.ArtistaRepository;
+import org.example.backend.repository.CurtidaRepository;
 import org.example.backend.repository.FilaReproducaoRepository;
 import org.example.backend.repository.HistoricoReproducaoRepository;
 import org.example.backend.repository.MusicaRepository;
@@ -30,6 +31,7 @@ public class AlbumService {
     private final PlaylistRepository playlistRepository;
     private final HistoricoReproducaoRepository historicoRepository;
     private final FilaReproducaoRepository filaRepository;
+    private final CurtidaRepository curtidaRepository;
 
     public AlbumService(
             AlbumRepository albumRepository,
@@ -37,7 +39,8 @@ public class AlbumService {
             MusicaRepository musicaRepository,
             PlaylistRepository playlistRepository,
             HistoricoReproducaoRepository historicoRepository,
-            FilaReproducaoRepository filaRepository
+            FilaReproducaoRepository filaRepository,
+            CurtidaRepository curtidaRepository
     ) {
         this.albumRepository = albumRepository;
         this.artistaRepository = artistaRepository;
@@ -45,6 +48,7 @@ public class AlbumService {
         this.playlistRepository = playlistRepository;
         this.historicoRepository = historicoRepository;
         this.filaRepository = filaRepository;
+        this.curtidaRepository = curtidaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -99,6 +103,7 @@ public class AlbumService {
             filaRepository.saveAll(filas);
 
             historicoRepository.deleteByMusica(musica);
+            curtidaRepository.deleteByMusica(musica);
         }
         musicaRepository.deleteAll(musicas);
     }

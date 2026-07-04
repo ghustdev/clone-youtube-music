@@ -45,8 +45,13 @@ export default function Player() {
       const player = (window as any).ytPlayer;
       if (player && player.getPlayerState) {
         setIsPlaying(player.getPlayerState() === 1);
-        setCurrentTime(player.getCurrentTime());
-        setDuration(player.getDuration());
+
+        const time = player.getCurrentTime();
+        const dur = player.getDuration();
+
+        // Evita NaN entrando no estado (causa do warning controlled/uncontrolled)
+        setCurrentTime(Number.isFinite(time) ? time : 0);
+        setDuration(Number.isFinite(dur) ? dur : 0);
       }
     }, 500);
     return () => clearInterval(interval);
@@ -61,7 +66,7 @@ export default function Player() {
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = Number(e.target.value);
-    setVolume(newVolume);
+    setVolume(Number.isFinite(newVolume) ? newVolume : 0);
     const player = (window as any).ytPlayer;
     if (player && player.setVolume) {
       player.setVolume(newVolume);
@@ -70,7 +75,7 @@ export default function Player() {
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = Number(e.target.value);
-    setCurrentTime(newTime);
+    setCurrentTime(Number.isFinite(newTime) ? newTime : 0);
 
     const player = (window as any).ytPlayer;
     if (player && player.seekTo) {
@@ -120,7 +125,7 @@ export default function Player() {
             <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
             <div className="h-1 rounded-full w-full bg-zinc-600 cursor-pointer relative group">
               <input
-                  type="range" min="0" max={duration || 100} value={currentTime}
+                  type="range" min="0" max={duration || 100} value={currentTime || 0}
                   onChange={handleSeek} disabled={!currentSong}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
               />
@@ -137,7 +142,7 @@ export default function Player() {
           <Volume2 size={20} className="text-zinc-400" />
           <div className="w-24 h-1 bg-zinc-600 rounded-full cursor-pointer relative group hidden md:block">
             <input
-                type="range" min="0" max="100" value={volume} onChange={handleVolumeChange}
+                type="range" min="0" max="100" value={volume || 0} onChange={handleVolumeChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
             <div className="bg-zinc-400 h-full rounded-full pointer-events-none transition-all" style={{ width: `${volume}%` }}></div>
