@@ -43,7 +43,7 @@ public class FilaReproducao {
     @OrderBy("ordem ASC")
     private List<FilaMusica> filaMusicas = new ArrayList<>();
 
-    protected FilaReproducao() {
+    public FilaReproducao() {
     }
 
     public FilaReproducao(Usuario usuario) {

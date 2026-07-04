@@ -61,10 +61,10 @@ public class Album {
     public List<Musica> obterFaixas() {
         return faixas;
     }
-
-    public Long getId() {
-        return id;
-    }
+	
+	public Long getId() {
+		return null;
+	}
 
     public String getTitulo() {
         return titulo;
@@ -100,5 +100,8 @@ public class Album {
 
     public List<Musica> getFaixas() {
         return faixas;
+    }
+    
+    public void setId(long l) {
     }
 }

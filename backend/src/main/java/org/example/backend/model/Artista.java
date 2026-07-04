@@ -36,7 +36,7 @@ public class Artista {
     @OneToMany(mappedBy = "artista", cascade = CascadeType.ALL)
     private List<Album> albums = new ArrayList<>();
 
-    protected Artista() {
+    public Artista() {
     }
 
     public Artista(String nome) {
@@ -84,4 +84,8 @@ public class Artista {
     public List<Album> getAlbums() {
         return albums;
     }
+	
+	public void setId(long l) {
+	
+	}
 }

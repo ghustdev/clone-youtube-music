@@ -45,7 +45,7 @@ public class Musica {
     @JoinColumn(name = "genero_id", nullable = false)
     private Genero genero;
 
-    protected Musica() {
+    public Musica() {
     }
 
     public Musica(String titulo, String urlYoutube, Integer duracaoSegundos, Album album, Artista artista, Genero genero) {
@@ -123,4 +123,8 @@ public class Musica {
     public void setGenero(Genero genero) {
         this.genero = genero;
     }
+	
+	public void setId(long l) {
+	
+	}
 }

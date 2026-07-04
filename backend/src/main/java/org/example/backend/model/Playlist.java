@@ -55,7 +55,7 @@ public class Playlist {
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 
-    protected Playlist() {
+    public Playlist() {
     }
 
     public Playlist(String nome, Usuario usuario) {
