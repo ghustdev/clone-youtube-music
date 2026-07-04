@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
@@ -24,6 +26,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/admin/musics")
 @SecurityRequirement(name = "bearerAuth")
 @CrossOrigin(origins = "http://localhost:3000")
+@Tag(name = "Admin — Músicas", description = "CRUD de músicas (admin)")
 public class AdminMusicController {
 
     private final MusicService musicService;
@@ -32,27 +35,32 @@ public class AdminMusicController {
         this.musicService = musicService;
     }
 
+    @Operation(summary = "Listar todas as músicas")
     @GetMapping
     public List<MusicResponse> listAll() {
         return musicService.listAll();
     }
 
+    @Operation(summary = "Buscar música por ID")
     @GetMapping("/{id}")
     public MusicResponse getById(@PathVariable Long id) {
         return musicService.getById(id);
     }
 
+    @Operation(summary = "Criar música")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MusicResponse create(@Valid @RequestBody MusicRequest request) {
         return musicService.create(request);
     }
 
+    @Operation(summary = "Atualizar música")
     @PutMapping("/{id}")
     public MusicResponse update(@PathVariable Long id, @Valid @RequestBody MusicRequest request) {
         return musicService.update(id, request);
     }
 
+    @Operation(summary = "Deletar música")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

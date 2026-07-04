@@ -10,9 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/recommendations")
 @CrossOrigin(origins = "http://localhost:3000")
+@Tag(name = "Recomendações", description = "Sugestões de músicas baseadas em artista e gênero")
 public class RecommendationController {
 
     private final RecommendationService recommendationService;
@@ -21,6 +25,7 @@ public class RecommendationController {
         this.recommendationService = recommendationService;
     }
 
+    @Operation(summary = "Recomendar músicas similares")
     @GetMapping
     public List<MusicResponse> recommend(@RequestParam Long musicId) {
         return recommendationService.recommend(musicId);
